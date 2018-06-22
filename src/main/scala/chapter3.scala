@@ -170,7 +170,7 @@ object chapter3 extends App{
     * Implement append in terms of either foldLeft or foldRight.
     */
   def append[A](a: A, as: List[A]): List[A] =
-    as.foldRight(List(a))((b, a) => List(b) ::: a)
+    foldLeft(as, List(a))((a, b) => List(b):::a)
 
   println(append(4, List(1, 2, 3)))
 
@@ -180,7 +180,10 @@ object chapter3 extends App{
     * Its runtime should be linear in the total length of all lists.
     * Try to use functions we have already defined.
     */
-  def concat(a: List[Int], b: List[Int]): List[Int] = ???
+  def concat[A](a: List[List[A]]): List[A] =
+    foldLeft(a, Nil:List[A])(_:::_)
+
+  println(concat(List(List(1,2), List(3,4))))
 
 
   /**
@@ -333,7 +336,7 @@ object chapter3 extends App{
 
   println(hasSubsequence(List(1,2,3,4), List(4)))
 
-
+  //Tree
   sealed trait Tree[+A]
   case class Leaf[A](value: A) extends Tree[A]
   case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
@@ -367,8 +370,8 @@ object chapter3 extends App{
     * Write a function depth that returns the maximum path length from the root of a tree to any leaf.
     */
   def depth(root: Tree[Int]):Int = root match {
-    case Leaf(a:Int) => 1
-    case Branch(l, r) => 1 + (maximum(l) max maximum(r))
+    case Leaf(a:Int) => 0
+    case Branch(l, r) => 1 + (depth(l) max depth(r))
   }
   println(depth(tree))
 
@@ -383,4 +386,35 @@ object chapter3 extends App{
   }
 
   println(map(tree)(_.toDouble))
+
+  /**
+    * Exercise 3.29
+    * Generalize size, maximum, depth, and map, writing a new function fold
+    * that abstracts over their similarities. Reimplement them in terms of
+    * this more general function. Can you draw an analogy between this fold
+    * function and the left and right folds for List?
+    */
+  def fold[A, B](root: Tree[A])(f: A => B)(g: (B, B) => B): B = root match {
+    case Leaf(a) => f(a)
+    case Branch(l, r) => g(fold(l)(f)(g), fold(r)(f)(g))
+  }
+
+  def sizeViaFold(root: Tree[Int]): Int = {
+    fold(root)(_ => 1)(1 + _ + _)
+  }
+
+  println(sizeViaFold(tree))
+
+  def maxViaFold(root: Tree[Int]): Int = {
+    fold(root)(a => a)(_ max _)
+  }
+
+  println(maxViaFold(tree))
+
+
+  def depthViaFold[A](root: Tree[A]): Int = {
+    fold(root)(_ => 0)((l, r) => 1 + (l max r))
+  }
+
+  println(depthViaFold(tree))
 }
